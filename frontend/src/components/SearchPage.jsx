@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = 'http://localhost:3000'
 
 function SearchPage({ onBack }) {
   const [role, setRole] = useState('')
@@ -26,7 +26,7 @@ function SearchPage({ onBack }) {
       })
       if (stipend.trim()) params.append('stipend', stipend.trim())
 
-      const res = await fetch(`${API_BASE}/intershala_jobs?${params}`)
+      const res = await fetch(`${API_BASE}/api/scrape/internshala?${params}`)
       if (!res.ok) throw new Error(`Server error: ${res.status}`)
 
       const data = await res.json()
@@ -34,7 +34,7 @@ function SearchPage({ onBack }) {
     } catch (err) {
       setError(
         err.message === 'Failed to fetch'
-          ? 'Can\'t reach the backend. Make sure uvicorn is running on port 8000.'
+          ? 'Can\'t reach the backend. Make sure the Express server is running on port 3000.'
           : err.message
       )
     } finally {
