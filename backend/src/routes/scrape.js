@@ -1,8 +1,10 @@
 import express from "express";
 import { internshalaScraper } from "../../services/internshala_scraper.js";
+import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
+router.use(authenticate)
 router.get("/internshala", async (req, res) => {
     try {
         const { role, location, stipend } = req.query;

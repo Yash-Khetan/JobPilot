@@ -2,11 +2,14 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet"
+
 
 import authRoutes from "./routes/auth.js";
 import scrapeRoutes from "./routes/scrape.js";
 import trackerRoutes from "./routes/tracker.js";
 
+// app.use(helmet());
 const app = express();
 const PORT = process.env.PORT || 3000;
 

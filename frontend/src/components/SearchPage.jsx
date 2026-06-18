@@ -1,15 +1,42 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '../context/AuthContext'
+import { trackerAPI } from '../utils/api'
 
 const API_BASE = 'http://localhost:3000'
 
-function SearchPage({ onBack }) {
+function SearchPage({ onBack, onSignIn }) {
+  const { user } = useAuth()
   const [role, setRole] = useState('')
   const [location, setLocation] = useState('')
   const [stipend, setStipend] = useState('')
   const [jobs, setJobs] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [trackedIds, setTrackedIds] = useState(new Set()) // track which jobs have been saved
+  const [trackingId, setTrackingId] = useState(null) // currently saving
+
+  const handleTrack = async (job, index) => {
+    if (!user) return
+    if (trackedIds.has(index)) return
+    setTrackingId(index)
+    try {
+      await trackerAPI.save({
+        role: job.role,
+        company: job.company,
+        location: job.location,
+        stipend: job.stipend,
+        description: job.description,
+        link: job.link,
+        source: job.source || 'internshala',
+        status: 'bookmarked',
+      })
+      setTrackedIds((prev) => new Set(prev).add(index))
+    } catch {
+      // silent fail
+    }
+    setTrackingId(null)
+  }
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -26,7 +53,16 @@ function SearchPage({ onBack }) {
       })
       if (stipend.trim()) params.append('stipend', stipend.trim())
 
-      const res = await fetch(`${API_BASE}/api/scrape/internshala?${params}`)
+      const token = localStorage.getItem('jobpilot_token')
+      const headers = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      const res = await fetch(`${API_BASE}/api/scrape/internshala?${params}`, { headers })
+
+      if (res.status === 401) {
+        setError('__auth__')
+        return
+      }
       if (!res.ok) throw new Error(`Server error: ${res.status}`)
 
       const data = await res.json()
@@ -153,7 +189,7 @@ function SearchPage({ onBack }) {
 
       {/* Error */}
       <AnimatePresence>
-        {error && (
+        {error && error !== '__auth__' && (
           <motion.div
             className="empty-state empty-state--error"
             initial={{ opacity: 0, y: 12 }}
@@ -163,6 +199,31 @@ function SearchPage({ onBack }) {
             <div className="empty-state__icon">⚠️</div>
             <h3 className="empty-state__title">Something broke</h3>
             <p className="empty-state__desc">{error}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Auth required */}
+      <AnimatePresence>
+        {error === '__auth__' && (
+          <motion.div
+            className="empty-state"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="empty-state__icon">🔒</div>
+            <h3 className="empty-state__title">Sign up to search</h3>
+            <p className="empty-state__desc">
+              You need an account to use the scraper. It only takes a few seconds!
+            </p>
+            <button
+              className="btn btn--primary"
+              style={{ marginTop: 20 }}
+              onClick={onSignIn}
+            >
+              Sign up / Sign in
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -212,14 +273,27 @@ function SearchPage({ onBack }) {
                 </div>
                 <div className="job__loc">📍 {job.location}</div>
                 {job.description && <p className="job__desc">{job.description}</p>}
-                <a
-                  className="job__apply"
-                  href={job.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Apply now →
-                </a>
+                <div className="job__actions">
+                  <a
+                    className="job__apply"
+                    href={job.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Apply now →
+                  </a>
+                  {user ? (
+                    <button
+                      className={`job__track ${trackedIds.has(i) ? 'job__track--done' : ''}`}
+                      onClick={() => handleTrack(job, i)}
+                      disabled={trackingId === i || trackedIds.has(i)}
+                    >
+                      {trackedIds.has(i) ? '✓ Tracked' : trackingId === i ? '...' : '🔖 Track'}
+                    </button>
+                  ) : (
+                    <span className="job__track-hint">Sign in to track</span>
+                  )}
+                </div>
               </motion.div>
             ))}
           </div>

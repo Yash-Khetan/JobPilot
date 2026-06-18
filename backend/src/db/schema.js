@@ -25,7 +25,7 @@ export const trackedJobsTable = pgTable("tracked_jobs", {
   description: text("description"),
   link: text("link").notNull(),
   source: text("source").notNull(),
-  status: text("status").default("applied"),
+  status: text("status").default("bookmarked"),
   notes: text("notes"),
   userId: integer("user_id")
     .notNull()

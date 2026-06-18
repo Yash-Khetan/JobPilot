@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import LandingPage from "./components/LandingPage";
 import SearchPage from "./components/SearchPage";
 import AuthPage from "./components/AuthPage";
+import DashboardPage from "./components/DashboardPage";
 import "./index.css";
 
 function AppContent() {
@@ -41,6 +42,12 @@ function AppContent() {
 
           {user ? (
             <>
+              <span
+                className={`nav__link ${page === 'dashboard' ? 'nav__link--active' : ''}`}
+                onClick={() => setPage("dashboard")}
+              >
+                Dashboard
+              </span>
               <span className="nav__user">
                 <span className="nav__user-avatar">
                   {user.name?.[0]?.toUpperCase() || "U"}
@@ -92,7 +99,7 @@ function AppContent() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <SearchPage onBack={() => setPage("landing")} />
+            <SearchPage onBack={() => setPage("landing")} onSignIn={() => setPage("auth")} />
           </motion.div>
         )}
 
@@ -104,7 +111,19 @@ function AppContent() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <AuthPage onSuccess={() => setPage("search")} />
+            <AuthPage onSuccess={() => setPage("dashboard")} />
+          </motion.div>
+        )}
+
+        {page === "dashboard" && (
+          <motion.div
+            key="dashboard"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <DashboardPage onSignIn={() => setPage("auth")} />
           </motion.div>
         )}
       </AnimatePresence>
