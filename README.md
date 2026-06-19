@@ -2,17 +2,17 @@
 
 **Stop opening 10 tabs to find one internship.**
 
-JobPilot is a real-time job/internship aggregator that scrapes listings from multiple portals and presents them in a single, clean interface. Tell it your role, city, and minimum stipend — it does the hunting so you can just pick what fits.
+JobPilot is a real-time internship aggregator that scrapes listings live from Internshala and uses **AI Semantic Matching** against your uploaded resume to find the most relevant opportunities. Tell it your role, city, and minimum stipend — it does the hunting, reads the job descriptions, and matches them to your exact skills and projects!
 
 ---
 
 ## ✨ Features
 
-- 🔍 **Real-time scraping** — no stale databases; listings are fetched live from source
-- 🏢 **Internshala** integration (Indeed, Wellfound, and YC Work at a Startup coming soon)
-- 💰 **Stipend filtering** — set a minimum stipend and only see what's worth your time
-- 🔗 **Direct apply links** — every result links straight to the original listing
-- ⚡ **Animated, modern UI** — React + Framer Motion frontend with a premium dark design
+- 🔍 **Real-time scraping** — no stale databases; listings are fetched live from Internshala using Playwright.
+- 🤖 **AI Semantic Matching** — Powered by Gemini AI. Upload your resume, and JobPilot generates semantic embeddings for your skills. It compares them against live job descriptions and only shows you internships with high match percentages!
+- 💰 **Stipend filtering** — set a minimum stipend and only see what's worth your time.
+- 🔖 **Bookmark & Track** — Save internships to your personal Kanban board dashboard to track your application status.
+- ⚡ **Animated, modern UI** — React + Framer Motion frontend with a premium dark design.
 
 ---
 
@@ -21,7 +21,9 @@ JobPilot is a real-time job/internship aggregator that scrapes listings from mul
 | Layer    | Tech |
 |----------|------|
 | Frontend | React 19, Vite, Framer Motion |
-| Backend  | FastAPI, Playwright |
+| Backend  | Node.js, Express |
+| Database | Neon (Serverless Postgres), Drizzle ORM |
+| AI Model | Google Gemini (Embeddings generation) |
 | Scraping | Playwright (headless Chromium) |
 
 ---
@@ -31,34 +33,39 @@ JobPilot is a real-time job/internship aggregator that scrapes listings from mul
 ```
 JobPilot/
 ├── backend/
-│   ├── main.py                  # FastAPI server & API routes
-│   ├── internshala_scraper1.py  # Internshala scraper (Playwright)
-│   ├── indeed_scraper.py        # Indeed scraper (WIP)
-│   ├── wellfound_scraper.py     # Wellfound scraper (WIP)
-│   ├── yc_scraper.py            # YC Work at a Startup scraper (WIP)
-│   └── requirements.txt        # Python dependencies
+│   ├── src/
+│   │   ├── index.js             # Express server entry point
+│   │   ├── db/                  # Drizzle ORM schema & config
+│   │   ├── routes/              # API endpoints (auth, scrape, tracker)
+│   │   └── middleware/          # JWT authentication
+│   ├── job_matching/            # Resume parsing & Gemini embedding logic
+│   ├── services/
+│   │   └── internshala_scraper.js # Playwright scraper for Internshala
+│   ├── Dockerfile               # Production Docker container
+│   ├── render.yaml              # (Optional) Render Blueprint
+│   └── package.json
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx              # Root component & page routing
 │   │   ├── index.css            # Global styles & design system
-│   │   └── components/
-│   │       ├── LandingPage.jsx  # Hero, how-it-works, CTA
-│   │       └── SearchPage.jsx   # Search form & results list
-│   ├── package.json
-│   └── vite.config.js
+│   │   └── components/          # React components (Landing, Search, Dashboard)
+│   ├── Dockerfile               # Multi-stage Docker build for Nginx
+│   ├── vercel.json              # Vercel SPA routing rules
+│   └── package.json
 │
 └── README.md
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started Locally
 
 ### Prerequisites
 
-- **Python 3.10+**
 - **Node.js 18+**
+- **Neon Postgres Database URL**
+- **Gemini API Key**
 
 ### 1. Clone the repo
 
@@ -71,30 +78,28 @@ cd JobPilot
 
 ```bash
 cd backend
-python -m venv venv
+npm install
 
-# Windows
-venv\Scripts\activate
-# macOS / Linux
-source venv/bin/activate
+# Set up environment variables
+cp .env.example .env 
+# Add your DATABASE_URL, JWT_SECRET, and GEMINI_API_KEY to .env
 
-pip install -r requirements.txt
-playwright install chromium
+# Push the database schema
+npm run db:push
+
+# Start the API server
+npm run dev
 ```
 
-### 3. Start the API server
+The API will be available at `http://localhost:3000`.
 
-```bash
-uvicorn main:app --reload --port 8000
-```
-
-The API will be available at `http://localhost:8000`.
-
-### 4. Frontend setup (new terminal)
+### 3. Frontend setup (new terminal)
 
 ```bash
 cd frontend
 npm install
+
+# Start the frontend
 npm run dev
 ```
 
@@ -102,50 +107,24 @@ The app will open at `http://localhost:5173`.
 
 ---
 
-## 📡 API Reference
+## 🐳 Deployment
 
-### `GET /intershala_jobs`
+JobPilot is configured for easy deployment on **Render** (Backend) and **Vercel** (Frontend) using Docker.
 
-Scrape Internshala for matching internships.
+### Backend (Render Free Tier)
+1. Go to the [Render Dashboard](https://dashboard.render.com/) and create a new **Web Service**.
+2. Connect your GitHub repository.
+3. Set the **Root Directory** to `backend`.
+4. Render will automatically detect the `Dockerfile`.
+5. Add your environment variables (`PORT=3000`, `DATABASE_URL`, `JWT_SECRET`, `GEMINI_API_KEY`).
+6. Deploy!
 
-| Parameter  | Type   | Required | Description                |
-|------------|--------|----------|----------------------------|
-| `role`     | string | ✅       | Job role (e.g. `Backend Development`) |
-| `location` | string | ✅       | City (e.g. `Mumbai`)       |
-| `stipend`  | string | ❌       | Minimum stipend filter     |
-
-**Example:**
-
-```
-GET /intershala_jobs?role=frontend+development&location=bangalore&stipend=10000
-```
-
-**Response:**
-
-```json
-[
-  {
-    "role": "Frontend Development Intern",
-    "company": "Acme Corp",
-    "location": "Bangalore",
-    "stipend": "₹15,000 /month",
-    "description": "Work on React dashboards...",
-    "link": "https://internshala.com/internship/detail/..."
-  }
-]
-```
-
----
-
-## 🛣️ Roadmap
-
-- [x] Internshala scraper
-- [ ] Indeed scraper
-- [ ] Wellfound (AngelList) scraper
-- [ ] YC Work at a Startup scraper
-- [ ] WhatsApp / email alerts for new listings
-- [ ] Saved searches & filters
-- [ ] Deploy to the web (Vercel + Railway / Render)
+### Frontend (Vercel Free Tier)
+1. Go to the [Vercel Dashboard](https://vercel.com/dashboard) and create a new **Project**.
+2. Connect your GitHub repository.
+3. Set the **Root Directory** to `frontend`.
+4. Add the `VITE_API_URL` environment variable pointing to your deployed Render backend URL.
+5. Deploy! Vercel will automatically read `vercel.json` for proper React routing.
 
 ---
 
@@ -162,5 +141,5 @@ This project is open source and available under the [MIT License](LICENSE).
 ---
 
 <p align="center">
-  Built because we were tired of the same grind · <strong>JobPilot</strong> © 2025
+  Built because we were tired of the same grind · <strong>JobPilot</strong> © 2026
 </p>
