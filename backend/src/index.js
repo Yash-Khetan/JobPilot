@@ -8,6 +8,7 @@ import helmet from "helmet"
 import authRoutes from "./routes/auth.js";
 import scrapeRoutes from "./routes/scrape.js";
 import trackerRoutes from "./routes/tracker.js";
+import resumeRoutes from "../job_matching/controller.js";
 
 // app.use(helmet());
 const app = express();
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/scrape", scrapeRoutes);
 app.use("/api/tracker", trackerRoutes);
+app.use("/api/resume", resumeRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 JobPilot server running on http://localhost:${PORT}`);

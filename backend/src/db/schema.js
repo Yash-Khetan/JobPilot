@@ -3,7 +3,7 @@
 //   1. users      — id, name, email (unique), password (hashed), createdAt
 //   2. trackedJobs — id, role, company, location, stipend, description, link, source, status, notes, userId (FK), createdAt
 
-import { pgTable, serial, text, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // ── Users ────────────────────────────────────────────────────────────────────
@@ -13,6 +13,9 @@ export const usersTable = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  resumeText: text("resumeText"),
+  structuredResume: jsonb("structuredResume"),
+  embedding: jsonb("embedding", { dimensions: 1536 }),
 });
 
 // ── Tracked Jobs ─────────────────────────────────────────────────────────────
