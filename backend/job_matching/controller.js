@@ -56,6 +56,17 @@ router.post(
             console.log("[upload] Generating embeddings...");
             // 4. embeddings
             const embedding = await generateEmbedding(resumeText);
+            
+            console.log("[upload] Generating combined skills+projects embeddings...");
+            let skillprojects_embed = null;
+            if (typeof structuredResume === "object") {
+                const skills = structuredResume.skills || "";
+                const projects = structuredResume.projects || "";
+                if (skills || projects) {
+                    const combinedText = `Skills: ${skills}\nProjects: ${projects}`;
+                    skillprojects_embed = await generateEmbedding(combinedText);
+                }
+            }
 
             console.log("[upload] Updating user profile in database...");
             // 5. save to db
@@ -63,7 +74,8 @@ router.post(
                 .set({
                     resumeText,
                     structuredResume,
-                    embedding
+                    embedding,
+                    skillprojects_embed
                 })
                 .where(eq(usersTable.id, req.user.id));
 

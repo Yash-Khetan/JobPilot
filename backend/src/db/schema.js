@@ -16,6 +16,7 @@ export const usersTable = pgTable("users", {
   resumeText: text("resumeText"),
   structuredResume: jsonb("structuredResume"),
   embedding: jsonb("embedding", { dimensions: 1536 }),
+  skillprojects_embed: jsonb("skillprojects_embed"),
 });
 
 // ── Tracked Jobs ─────────────────────────────────────────────────────────────

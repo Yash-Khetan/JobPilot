@@ -12,7 +12,7 @@ async function generateEmbedding(text) {
             contents: text,
         });
         console.log("[generateEmbedding] Successfully generated embedding.");
-        return response.embeddings;
+        return response.embeddings[0].values;
     } catch (error) {
         console.error("[generateEmbedding] Error generating embedding:", error);
         throw error;

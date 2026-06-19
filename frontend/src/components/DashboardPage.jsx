@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
-import { trackerAPI } from '../utils/api'
+import { trackerAPI, resumeAPI } from '../utils/api'
 
 const COLUMNS = [
   { id: 'bookmarked', label: 'Bookmarked', emoji: '🔖', color: '#f5c542' },
@@ -23,6 +23,28 @@ function DashboardPage({ onSignIn }) {
   const [notesText, setNotesText] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
   const notesRef = useRef(null)
+  
+  const [uploadingResume, setUploadingResume] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    setUploadingResume(true)
+    try {
+      await resumeAPI.upload(file)
+      if (typeof refreshUser === 'function') {
+        await refreshUser()
+      } else {
+        window.location.reload()
+      }
+    } catch (err) {
+      alert("Error uploading resume: " + err.message)
+    } finally {
+      setUploadingResume(false)
+    }
+  }
 
   // Fetch all tracked jobs on mount
   const fetchJobs = useCallback(async () => {
@@ -191,7 +213,7 @@ function DashboardPage({ onSignIn }) {
 
   return (
     <div className="dashboard">
-      <div className="dashboard__header">
+      <div className="dashboard__header" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'stretch' }}>
         <div>
           <h1 className="dashboard__title">Your Pipeline</h1>
           <p className="dashboard__sub">
@@ -199,6 +221,33 @@ function DashboardPage({ onSignIn }) {
               ? 'No jobs tracked yet — search and bookmark some!'
               : `${totalJobs} job${totalJobs !== 1 ? 's' : ''} across ${COLUMNS.filter((c) => grouped[c.id].length > 0).length} stages`}
           </p>
+        </div>
+        
+        <div style={{ padding: '1.25rem', background: 'var(--color-bg-secondary)', borderRadius: '12px', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+          {!user.hasResume ? (
+            <>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text)' }}>Unlock Personalized Matches 🪄</h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Upload your resume so JobPilot can semantically match you with the best roles.</p>
+              </div>
+              <div>
+                 <input type="file" accept="application/pdf" ref={fileInputRef} onChange={handleResumeUpload} style={{ display: 'none' }} />
+                 <button className="btn btn--primary" onClick={() => fileInputRef.current.click()} disabled={uploadingResume}>
+                    {uploadingResume ? 'Analyzing PDF...' : 'Upload PDF Resume'}
+                 </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text)' }}>Resume Active ✨</h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>JobPilot is currently using your profile to find highly personalized matches.</p>
+              </div>
+              <div style={{ color: '#34d399', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 <span style={{ fontSize: '1.25rem' }}>✓</span> Profile Synced
+              </div>
+            </>
+          )}
         </div>
       </div>
 

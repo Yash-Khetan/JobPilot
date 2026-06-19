@@ -63,9 +63,17 @@ function SearchPage({ onBack, onSignIn }) {
         setError('__auth__')
         return
       }
-      if (!res.ok) throw new Error(`Server error: ${res.status}`)
-
+      
       const data = await res.json()
+
+      if (!res.ok) {
+        if (res.status === 400 && data.message && data.message.includes("upload your resume")) {
+           setError('__no_resume__')
+           return
+        }
+        throw new Error(data.message || `Server error: ${res.status}`)
+      }
+
       setJobs(data)
     } catch (err) {
       setError(
@@ -104,7 +112,7 @@ function SearchPage({ onBack, onSignIn }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25, duration: 0.4 }}
       >
-        We'll scrape Internshala live. No cached data, no stale listings.
+        We scrape Internshala live, then use your <strong style={{ color: 'var(--color-primary)' }}>Resume Semantic Embeddings</strong> to filter out any internship that is less than an 80% match to your exact skills and projects.
       </motion.p>
 
       <motion.form
@@ -189,7 +197,7 @@ function SearchPage({ onBack, onSignIn }) {
 
       {/* Error */}
       <AnimatePresence>
-        {error && error !== '__auth__' && (
+        {error && error !== '__auth__' && error !== '__no_resume__' && (
           <motion.div
             className="empty-state empty-state--error"
             initial={{ opacity: 0, y: 12 }}
@@ -228,6 +236,31 @@ function SearchPage({ onBack, onSignIn }) {
         )}
       </AnimatePresence>
 
+      {/* Resume required */}
+      <AnimatePresence>
+        {error === '__no_resume__' && (
+          <motion.div
+            className="empty-state"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="empty-state__icon">📄</div>
+            <h3 className="empty-state__title">Resume Required</h3>
+            <p className="empty-state__desc">
+              You need to upload your resume before searching. We use it to filter out irrelevant jobs and only show you highly personalized matches!
+            </p>
+            <button
+              className="btn btn--primary"
+              style={{ marginTop: 20 }}
+              onClick={onBack}
+            >
+              Go to Dashboard to Upload
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* No results */}
       <AnimatePresence>
         {jobs && jobs.length === 0 && (
@@ -249,9 +282,12 @@ function SearchPage({ onBack, onSignIn }) {
       {/* Results */}
       {jobs && jobs.length > 0 && (
         <div>
-          <div className="results-bar">
+          <div className="results-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div className="results-bar__count">
-              <span>{jobs.length}</span> internship{jobs.length !== 1 && 's'} found
+              <span>{jobs.length}</span> personalized internship{jobs.length !== 1 && 's'} found
+            </div>
+            <div style={{ fontSize: '0.85rem', color: '#34d399', background: 'rgba(52, 211, 153, 0.1)', padding: '6px 12px', borderRadius: '100px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
+              ✨ &gt;80% Resume Match
             </div>
           </div>
 

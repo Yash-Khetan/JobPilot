@@ -18,6 +18,11 @@ export async function apiFetch(endpoint, options = {}) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  // Allow browser to set boundary for multipart/form-data
+  if (options.body instanceof FormData) {
+    delete headers["Content-Type"];
+  }
+
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
@@ -69,4 +74,16 @@ export const trackerAPI = {
     apiFetch(`/tracker/${id}`, {
       method: "DELETE",
     }),
+};
+
+// ── Resume API ────────────────────────────────────────────────────
+export const resumeAPI = {
+  upload: (file) => {
+    const formData = new FormData();
+    formData.append("resume", file);
+    return apiFetch("/resume/upload", {
+      method: "POST",
+      body: formData,
+    });
+  },
 };

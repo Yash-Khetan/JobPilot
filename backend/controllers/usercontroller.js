@@ -71,13 +71,16 @@ export const userprofile = async (req, res) => {
   try {
     const user = await db.query.usersTable.findFirst({
       where: eq(usersTable.id, userId),
-      columns: { id: true, name: true, email: true, createdAt: true },
+      columns: { id: true, name: true, email: true, createdAt: true, resumeText: true },
       with: { trackedJobs: true },
     });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json(user);
+    
+    // Strip large text fields and add boolean flag
+    const { resumeText, ...rest } = user;
+    res.json({ ...rest, hasResume: !!resumeText });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
