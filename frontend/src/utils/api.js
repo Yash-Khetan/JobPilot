@@ -1,6 +1,6 @@
 // src/utils/api.js — API helper with auth token management
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 /**
  * Wrapper around fetch that automatically attaches the JWT

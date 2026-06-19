@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { trackerAPI } from '../utils/api'
 
-const API_BASE = 'http://localhost:3000'
+// Use environment variable for API URL in production, fallback to localhost for development
+// Notice we use the base URL (without /api) because SearchPage appends /api/scrape/internshala
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 function SearchPage({ onBack, onSignIn }) {
   const { user } = useAuth()
