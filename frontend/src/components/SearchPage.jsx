@@ -59,7 +59,7 @@ function SearchPage({ onBack, onSignIn }) {
       const headers = {}
       if (token) headers['Authorization'] = `Bearer ${token}`
 
-      const res = await fetch(`${API_BASE}/api/scrape/internshala?${params}`, { headers })
+      const res = await fetch(`${API_BASE}/scrape/internshala?${params}`, { headers })
 
       if (res.status === 401) {
         setError('__auth__')
