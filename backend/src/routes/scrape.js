@@ -13,12 +13,10 @@ router.get("/internshala", async (req, res) => {
         if (!role || !location) {
             return res.status(400).json({ message: "role and location are required query parameters" });
         }
-        
         // Fetch user's embedding
         const user = await db.query.usersTable.findFirst({
             where: eq(usersTable.id, req.user.id)
         });
-        
         if (!user || !user.skillprojects_embed) {
             return res.status(400).json({ message: "Please upload your resume in the dashboard first to get personalized job matches." });
         }

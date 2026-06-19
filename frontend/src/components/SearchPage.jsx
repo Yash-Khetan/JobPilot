@@ -63,18 +63,20 @@ function SearchPage({ onBack, onSignIn }) {
         setError('__auth__')
         return
       }
-      
+
       const data = await res.json()
 
       if (!res.ok) {
         if (res.status === 400 && data.message && data.message.includes("upload your resume")) {
-           setError('__no_resume__')
-           return
+          setError('__no_resume__')
+          return
         }
         throw new Error(data.message || `Server error: ${res.status}`)
       }
 
-      setJobs(data)
+      // Sort jobs by similarityScore descending
+      const sortedJobs = data.sort((a, b) => (b.similarityScore || 0) - (a.similarityScore || 0));
+      setJobs(sortedJobs)
     } catch (err) {
       setError(
         err.message === 'Failed to fetch'
@@ -287,7 +289,7 @@ function SearchPage({ onBack, onSignIn }) {
               <span>{jobs.length}</span> personalized internship{jobs.length !== 1 && 's'} found
             </div>
             <div style={{ fontSize: '0.85rem', color: '#34d399', background: 'rgba(52, 211, 153, 0.1)', padding: '6px 12px', borderRadius: '100px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
-              ✨ &gt;80% Resume Match
+              ✨ &gt;60% Resume Match
             </div>
           </div>
 
@@ -305,7 +307,14 @@ function SearchPage({ onBack, onSignIn }) {
                     <h3 className="job__role">{job.role}</h3>
                     <div className="job__company">{job.company}</div>
                   </div>
-                  {job.stipend && <div className="job__pay">{job.stipend}</div>}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                    {job.stipend && <div className="job__pay">{job.stipend}</div>}
+                    {job.similarityScore && (
+                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#34d399', background: 'rgba(52, 211, 153, 0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
+                        ✨ {job.similarityScore.toFixed(0)}% Match
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="job__loc">📍 {job.location}</div>
                 {job.description && <p className="job__desc">{job.description}</p>}

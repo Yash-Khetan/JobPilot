@@ -24,34 +24,40 @@ export async function internshalaScraper(role, location, stipend = null, skills_
         await page.waitForTimeout(2000);
 
         const jobs = [];
-        const cards = await page.locator('.individual_internship').all();
+        const extractedData = await page.$$eval('.individual_internship', (elements) => {
+            return elements.map(el => {
+                const jobRole = el.querySelector('.job-internship-name')?.innerText?.trim() || "";
+                const company = el.querySelector('.company-name')?.innerText?.trim() || "";
+                const jobLocation = el.querySelector('.locations a, .location_link')?.innerText?.trim() || "";
+                const jobStipend = el.querySelector('.stipend')?.innerText?.trim() || "";
+                const description = el.querySelector('.about_job, .job-description, .detail-row-1')?.innerText?.trim() || "";
+                const linkAttr = el.querySelector('.job-title-href')?.getAttribute('href');
+                const link = linkAttr ? 'https://internshala.com' + linkAttr : "";
+                
+                return { jobRole, company, jobLocation, jobStipend, description, link };
+            });
+        });
 
-        for (const card of cards) {
-            const jobRole = await card.locator('h2.job-internship-name').innerText();
-            const company = await card.locator('.company-name').innerText();
-            const jobLocation = await card.locator('.locations a').innerText();
-            const jobStipend = await card.locator('.stipend').innerText();
-            const description = await card.locator('.about_job .text').innerText();
-            let link = await card.locator('.job-title-href').getAttribute('href');
-            link = 'https://internshala.com' + link;
+        for (const data of extractedData) {
+            if (!data.jobRole || !data.link) continue;
 
             // generate the embeddings for the description and role
-            const jdText = (description || "") + " " + (jobRole || "");
+            const jdText = `${data.description} ${data.jobRole} ${data.company}`;
             const jd_role_embeddings = await generateEmbedding(jdText);
 
             // cosine similarity between the skills and projects and the jd and role
             const similarity = cosineSimilarity(jd_role_embeddings, skills_projects_embed);
 
-            console.log(`[Scraper] Similarity for ${jobRole} at ${company}: ${similarity.toFixed(2)}`);
+            console.log(`[Scraper] Similarity for ${data.jobRole} at ${data.company}: ${similarity.toFixed(2)}`);
 
             if (similarity > 0.60) {
                 jobs.push({
-                    role: jobRole,
-                    company,
-                    location: jobLocation,
-                    stipend: jobStipend,
-                    description,
-                    link,
+                    role: data.jobRole,
+                    company: data.company,
+                    location: data.jobLocation,
+                    stipend: data.jobStipend,
+                    description: data.description,
+                    link: data.link,
                     source: 'internshala',
                     similarityScore: similarity * 100
                 });
