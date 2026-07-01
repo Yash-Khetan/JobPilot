@@ -54,3 +54,5 @@ export async function wellfound(role, location) {
         await browser.close();
     }
 }
+
+wellfound()

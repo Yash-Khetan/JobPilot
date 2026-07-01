@@ -1,5 +1,7 @@
 import express from "express";
 import { internshalaScraper } from "../../services/internshala_scraper.js";
+// import { indeedScraper } from "../../services/indeed_scraper.js";
+import { naukriScraper } from "../../services/naukri_scraper.js";
 import { authenticate } from "../middleware/auth.js";
 import { db } from "../db/index.js";
 import { usersTable } from "../db/schema.js";
@@ -27,5 +29,49 @@ router.get("/internshala", async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+// router.get("/indeed", async (req, res) => {
+//     try {
+//         const { role, location } = req.query;
+//         if (!role || !location) {
+//             return res.status(400).json({ message: "role and location are required query parameters" });
+//         }
+//         // Fetch user's embedding
+//         const user = await db.query.usersTable.findFirst({
+//             where: eq(usersTable.id, req.user.id)
+//         });
+//         if (!user || !user.skillprojects_embed) {
+//             return res.status(400).json({ message: "Please upload your resume in the dashboard first to get personalized job matches." });
+//         }
+
+//         const jobs = await indeedScraper(role, location, user.skillprojects_embed);
+//         res.json(jobs);
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// });
+
+router.get("/naukri", async (req, res) => {
+    try {
+        const { role, location } = req.query;
+        if (!role || !location) {
+            return res.status(400).json({ message: "role and location are required query parameters" });
+        }
+        // Fetch user's embedding
+        const user = await db.query.usersTable.findFirst({
+            where: eq(usersTable.id, req.user.id)
+        });
+        if (!user || !user.skillprojects_embed) {
+            return res.status(400).json({ message: "Please upload your resume in the dashboard first to get personalized job matches." });
+        }
+        console.log("before the scraper call");
+        const jobs = await naukriScraper(role, location, user.skillprojects_embed);
+        console.log("after scraper call");
+        console.log(jobs);
+        res.json(jobs);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+})
 
 export default router
